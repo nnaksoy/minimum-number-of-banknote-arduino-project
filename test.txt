@@ -1,0 +1,5 @@
+0,2,1,1,5,
+1,kopukleme,3,15 TL
+2,yikama,0,10 TL
+3,kurulama,1,5 TL
+4,cilalama,20,50 TL

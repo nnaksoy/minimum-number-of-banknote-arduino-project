@@ -1,0 +1,832 @@
+// Oktay Karabıyıkoğlu 190201015
+#include <SPI.h>
+#include <SD.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(A0, A1, A2, A3, A4, A5);
+File myFile;
+int dizi[13];
+int k = 0;
+int n = 0;
+int bestladet = 0;
+int ontladet = 0;
+int yirmitladet = 0;
+int ellitladet = 0;
+int yuztladet = 0;
+int bestltut,ontltut,yirmitltut,ellitltut,yuztltut;
+int k1 = 0, k2 = 0, k3 = 0, k4 = 0,k5=0,k6=0,k7=0,k8=0,k9=0;;
+int hizmet1tut;
+int hizmet2tut;
+int hizmet3tut;
+int hizmet4tut;
+int hizmet1[2];
+int hizmet2[2];
+int hizmet3[2];
+int hizmet4[2];
+int m = 0;
+int hangiPara;
+int iadepara = 0;
+String parayiYaz;
+int secenek = 0;
+int buton1 = 5, buton2 = 6, buton3 = 7, buton4 = 8, buton5 = 9, buton6 = 10;
+int adet5, adet10, adet20, adet50, adet100, adetKopuk, adetKuru, adetYika, adetCila;
+int toplam;
+int kopuklemeID = 1;
+int yikamaID = 2;
+int kurulamaID = 3;
+int cilalamaID = 4;
+String kopuklemeAd = "Kopukleme ", yikamaAd = "Yikama ", kurulamaAd = "Kurulama ", cilalamaAd = "Cilalama ";
+void paraMenu() {
+  lcd.begin(16, 4);
+  lcd.clear();
+  lcd.print("1)5TL,2)10TL");
+  lcd.setCursor(0, 1);
+  lcd.print("3)20TL,4)50TL");
+  lcd.setCursor(0, 2);
+  lcd.print("5)100TL 6)Bitis");
+  delay(3000);
+  lcd.clear();
+}
+long rastgele;
+
+void setup() {
+  paraMenu();
+  pinMode(buton1, INPUT_PULLUP);
+  pinMode(buton2, INPUT_PULLUP);
+  pinMode(buton3, INPUT_PULLUP);
+  pinMode(buton4, INPUT_PULLUP);
+  pinMode(buton5, INPUT_PULLUP);
+  pinMode(buton6, INPUT_PULLUP);
+  pinMode(3, OUTPUT);
+  pinMode(2, OUTPUT);
+
+
+  Serial.begin(9600);
+  while (!Serial) {
+
+  }
+
+
+  Serial.print(F("SD card Baslatiliyor..."));
+
+  if (!SD.begin(4)) {
+    Serial.println(F("Baslatma basarisiz oldu!"));
+    while (1);
+  }
+  Serial.println(F("Baslatma Yapildi."));
+  myFile = SD.open("test.txt", FILE_WRITE);
+
+  if (myFile) {
+    Serial.print(F("Test.txt dosyasina yaziliyor ..."));
+    myFile.close();
+    Serial.println(F("Bitti."));
+  } else {
+    Serial.println(F("test.txt acilirken hata"));
+  }
+
+  myFile = SD.open("test.txt");
+  if (myFile) {
+    Serial.println(F("test.txt:"));
+
+    while (myFile.available()) {
+      String line = myFile.readStringUntil(',');
+      if (line.toInt() != 0 || line == "0")
+      {
+        if (m == 5)
+        {
+          Serial.println(" ");
+          m = 1;
+        }
+
+        Serial.print(line);
+        Serial.print(" ");
+        dizi[k] = line.toInt();
+        k++;
+        m++;
+
+      }
+      else {
+        Serial.print(line);
+        Serial.print(" ");
+        m++;
+        if (m == 5)
+        {
+          Serial.println("");
+          m = 1;
+        }
+      }
+
+
+    }
+    bestladet = dizi[0];
+    ontladet = dizi[1];
+    yirmitladet = dizi[2];
+    ellitladet = dizi[3];
+    yuztladet = dizi[4];
+    hizmet1[0] = dizi[6];
+    hizmet1[1] = dizi[7];
+    hizmet2[0] = dizi[8];
+    hizmet2[1] = dizi[9];
+    hizmet3[0] = dizi[10];
+    hizmet3[1] = dizi[11];
+    hizmet4[0] = dizi[12];
+    hizmet4[1] = dizi[13];
+    Serial.println("");
+    bestltut=bestladet;
+    ontltut=ontladet;
+    yirmitltut=yirmitladet;
+    ellitltut=ellitladet;
+    yuztltut=yuztladet;
+    hizmet1tut=hizmet1[0]; 
+    hizmet2tut=hizmet2[0];
+    hizmet3tut=hizmet3[0]; 
+    hizmet4tut=hizmet4[0];
+
+    myFile.close();
+  } else {
+    Serial.println("test.txt acilirken hata");
+  }
+
+}
+int paraTut;
+void paraYaz(int adet, int hangiPara, String parayiYaz) {
+  lcd.clear();
+  toplam = toplam + (hangiPara);
+  lcd.print(adet + parayiYaz + "     " + toplam + "TL attiniz.");
+  delay(2000);
+  lcd.clear();
+  Serial.print(F("Kasa bilgisi: "));
+  Serial.print(bestladet);
+  Serial.print(" ");
+  Serial.print(ontladet);
+  Serial.print(" ");
+  Serial.print(yirmitladet);
+  Serial.print(" ");
+  Serial.print(ellitladet);
+  Serial.print(" ");
+  Serial.println(yuztladet);
+
+
+
+}
+
+void hizmetYaz(int hizmetID)
+{ lcd.clear();
+  if (hizmetID == 1)
+  { paraTut = toplam;
+    toplam = toplam - hizmet1[1];
+    if (toplam >= 0 && hizmet1[0] >= 0) {
+      lcd.print(adetKopuk);
+      lcd.print(". ");
+      lcd.print(kopuklemeAd);
+      lcd.setCursor(0, 2);
+      lcd.print("Kalan hizmet:");
+      lcd.print(hizmet1[0]);
+
+      delay(2000);
+      lcd.clear();
+    }
+    else if (hizmet1[0] < 0)
+    {
+      lcd.print("hizmet sayisi");
+      lcd.setCursor(0, 1);
+      lcd.print("bitti");
+      lcd.setCursor(0, 2);
+      lcd.print("farklı secim");
+      lcd.setCursor(0, 3);
+      lcd.print("yapiniz");
+      toplam = toplam + hizmet1[1];
+      delay(2000);
+      lcd.clear();
+    }
+    else if (toplam < 0)
+    { toplam = paraTut;
+      lcd.print("Ilave para 5)");
+      lcd.setCursor(0, 1);
+      lcd.print("yada Para iadesi");
+      lcd.setCursor(0, 2);
+      lcd.print("icin 6) butona");
+      lcd.setCursor(0, 3);
+      lcd.print("tikla");
+      hizmet1[0] = hizmet1tut;
+      hizmet2[0] = hizmet2tut;
+      hizmet3[0] = hizmet3tut;
+      hizmet4[0] = hizmet4tut;
+      delay(5000);
+      lcd.clear();
+      secenek = 2;
+
+    }
+  }
+  else if (hizmetID == 2)
+  { paraTut = toplam;
+    toplam = toplam - hizmet2[1];
+    if (toplam >= 0 && hizmet2[0] >= 0) {
+      lcd.print(adetYika);
+      lcd.print(". ");
+      lcd.print(yikamaAd);
+      lcd.setCursor(0, 2);
+      lcd.print("Kalan hizmet:");
+      lcd.print(hizmet2[0]);
+      delay(2000);
+      lcd.clear();
+    }
+    else if (hizmet2[0] < 0)
+    {
+      lcd.print("hizmet sayisi");
+      lcd.setCursor(0, 1);
+      lcd.print("bitti");
+      lcd.setCursor(0, 2);
+      lcd.print("farklı secim");
+      lcd.setCursor(0, 3);
+      lcd.print("yapiniz");
+      toplam = toplam + hizmet2[1];
+      delay(2000);
+      lcd.clear();
+    }
+    else if (toplam < 0)
+    { toplam = paraTut;
+      lcd.print("Ilave para 5)");
+      lcd.setCursor(0, 1);
+      lcd.print("yada Para iadesi");
+      lcd.setCursor(0, 2);
+      lcd.print("icin 6) butona");
+      lcd.setCursor(0, 3);
+      lcd.print("tikla");
+      hizmet1[0] = hizmet1tut;
+      hizmet2[0] = hizmet2tut;
+      hizmet3[0] = hizmet3tut;
+      hizmet4[0] = hizmet4tut;
+      delay(5000);
+      lcd.clear();
+      secenek = 2;
+
+    }
+  }
+  if (hizmetID == 3)
+  { paraTut = toplam;
+    toplam = toplam - hizmet3[1];
+    if (toplam >= 0 && hizmet3[0] >= 0) {
+      lcd.print(adetKuru);
+      lcd.print(". ");
+      lcd.print(kurulamaAd);
+      lcd.setCursor(0, 2);
+      lcd.print("Kalan hizmet:");
+      lcd.print(hizmet3[0]);
+      delay(2000);
+      lcd.clear();
+    }
+    else if (hizmet3[0] < 0)
+    {
+      lcd.print("hizmet sayisi");
+      lcd.setCursor(0, 1);
+      lcd.print("bitti");
+      lcd.setCursor(0, 2);
+      lcd.print("farklı secim");
+      lcd.setCursor(0, 3);
+      lcd.print("yapiniz");
+      toplam = toplam + hizmet3[1];
+      delay(2000);
+      lcd.clear();
+    }
+    else if (toplam < 0)
+    { toplam = paraTut;
+      lcd.print("Ilave para 5)");
+      lcd.setCursor(0, 1);
+      lcd.print("yada Para iadesi");
+      lcd.setCursor(0, 2);
+      lcd.print("icin 6) butona");
+      lcd.setCursor(0, 3);
+      lcd.print("tikla");
+      hizmet1[0] = hizmet1tut;
+      hizmet2[0] = hizmet2tut;
+      hizmet3[0] = hizmet3tut;
+      hizmet4[0] = hizmet4tut;
+      delay(5000);
+      lcd.clear();
+      secenek = 2;
+
+    }
+
+  }
+  if (hizmetID == 4)
+  { paraTut = toplam;
+    toplam = toplam - hizmet4[1];
+    if (toplam >= 0 && hizmet4[0] >= 0) {
+      lcd.print(adetCila);
+      lcd.print(". ");
+      lcd.print(cilalamaAd);
+      lcd.setCursor(0, 2);
+      lcd.print("Kalan hizmet:");
+      lcd.print(hizmet4[0]);
+      delay(2000);
+      lcd.clear();
+    }
+    else if (hizmet4[0] < 0)
+    {
+      lcd.print("hizmet sayisi");
+      lcd.setCursor(0, 1);
+      lcd.print("bitti");
+      lcd.setCursor(0, 2);
+      lcd.print("farklı secim");
+      lcd.setCursor(0, 3);
+      lcd.print("yapiniz");
+      toplam = toplam + hizmet4[1];
+      delay(2000);
+      lcd.clear();
+    }
+    else if (toplam < 0)
+    { toplam = paraTut;
+      lcd.print("Ilave para 5)");
+      lcd.setCursor(0, 1);
+      lcd.print("yada Para iadesi");
+      lcd.setCursor(0, 2);
+      lcd.print("icin 6) butona");
+      lcd.setCursor(0, 3);
+      lcd.print("tikla");
+      hizmet1[0] = hizmet1tut;
+      hizmet2[0] = hizmet2tut;
+      hizmet3[0] = hizmet3tut;
+      hizmet4[0] = hizmet4tut;
+      delay(5000);
+      lcd.clear();
+      secenek = 2;
+
+    }
+
+  }
+  if (hizmetID == 5)
+  {
+    lcd.begin(16, 4); lcd.clear();
+    if (secenek == 1) {
+
+
+      if (toplam >= 0)
+      {
+        if (toplam >= 100)
+        {
+
+          int paraustu = 0;
+          int sayac = 100;
+          while (toplam >= sayac && yuztladet > 0)
+          {
+            yuztladet--;
+            paraustu++;
+            sayac = sayac + 100;
+          }
+          Serial.print(paraustu);
+          Serial.println(F(" Tane 100 TL"));
+          if (yuztladet >= 0)
+          {
+            toplam = toplam - (paraustu * 100);
+          }
+
+        }
+        if (toplam >= 50)
+        {
+          int paraustu1 = 0;
+          int sayac1 = 50;
+          while (toplam >= sayac1 && ellitladet > 0)
+          {
+            ellitladet--;
+            paraustu1++;
+            sayac1 = sayac1 + 50;
+          }
+          Serial.print(paraustu1);
+          Serial.println(F(" Tane 50 TL"));
+          if (ellitladet >= 0)
+          {
+            toplam = toplam - (paraustu1 * 50);
+          }
+
+        }
+        if (toplam >= 20)
+        {
+          int paraustu2 = 0;
+          int sayac2 = 20;
+          while (toplam >= sayac2 && yirmitladet > 0)
+          {
+            yirmitladet--;
+            paraustu2++;
+            sayac2 = sayac2 + 20;
+          }
+          Serial.print(paraustu2);
+          Serial.println(F(" Tane 20 TL"));
+          if (yirmitladet >= 0)
+          {
+            toplam = toplam - (paraustu2 * 20);
+          }
+
+        }
+        if (toplam >= 10)
+        {
+          int paraustu3 = 0;
+          int sayac3 = 10;
+          while (toplam >= sayac3 && ontladet > 0)
+          {
+            ontladet--;
+            paraustu3++;
+            sayac3 = sayac3 + 10;
+          }
+          Serial.print(paraustu3);
+          Serial.println(F(" Tane 10 TL"));
+          lcd.setCursor(0, 3);
+          if (ontladet >= 0)
+          {
+            toplam = toplam - (paraustu3 * 10);
+          }
+
+        }
+        if (toplam >= 5)
+        {
+          int paraustu4 = 0;
+          int sayac4 = 5;
+          while (toplam >= sayac4 && bestladet > 0)
+          {
+            bestladet--;
+            paraustu4++;
+            sayac4 = sayac4 + 5;
+          }
+          Serial.print(paraustu4);
+          Serial.println(F(" Tane 5 TL"));
+          if (bestladet >= 0)
+          {
+            toplam = toplam - (paraustu4 * 5);
+          }
+
+
+        }
+
+
+      }
+      if (toplam == 0)
+      {
+        Serial.println(F("Para ustunuzu aliniz."));
+
+      }
+      else
+      {
+        Serial.println(F("Para var yeterli para ustu yok"));
+        Serial.println(F("Paraniz iade ediliyor...."));
+        Serial.print(F("iade edilen para :"));
+        Serial.print(iadepara);
+        Serial.println(F("TL"));
+
+      }
+      delay(5000);
+      lcd.clear();
+    }
+  }
+
+}
+void hizmetMenu()
+{
+
+  lcd.begin(16, 4); lcd.clear();
+  lcd.print("1)" + kopuklemeAd + hizmet1[1] + "TL");
+  lcd.setCursor(0, 1);
+  lcd.print("2)" + yikamaAd + hizmet2[1] + "TL");
+  lcd.setCursor(0, 2);
+  lcd.print("3)" + kurulamaAd + hizmet3[1] + "TL");
+  lcd.setCursor(0, 3);
+  lcd.print("4)" + cilalamaAd + hizmet4[1] + "TL");
+  delay(3000);
+  lcd.clear();
+  lcd.print("Bitirmek icin 5. butona tiklayiniz");
+  delay(3000);
+  lcd.clear();
+
+}
+void loop() {
+
+  randomSeed(analogRead(A1));
+  rastgele = random(5);
+
+  randomSeed(analogRead(A1));
+  rastgele = random(5);
+
+  randomSeed(analogRead(A2));
+  rastgele = random(5);
+  
+  digitalWrite(0, LOW);
+  digitalWrite(6, LOW);
+  int val1 = digitalRead(buton1);
+  int val2 = digitalRead(buton2);
+  int val3 = digitalRead(buton3);
+  int val4 = digitalRead(buton4);
+  int val5 = digitalRead(buton5);
+  int val6 = digitalRead(buton6);
+
+  if (val1 == LOW)
+  {
+    if (secenek == 0 ) {
+      if(k5==0)
+      {
+        bestltut=bestladet;
+        k5++;
+      }
+      adet5++;
+      parayiYaz = " tane 5TL ";
+      bestladet++;
+      paraYaz(adet5, 5, parayiYaz);
+    }
+    else
+    { adetKopuk++;
+      if (k1 == 0)
+      {
+        hizmet1tut = hizmet1[0];
+        k1++;
+      }
+      hizmet1[0]--;
+      hizmetYaz(kopuklemeID);
+
+
+    }
+  }
+
+
+  if (val2 == LOW)
+  { if (secenek == 0) {
+       if(k6==0)
+      {
+        ontltut=ontladet;
+        k6++;
+      }
+      adet10++;
+      parayiYaz = " tane 10TL";
+      ontladet++;
+      paraYaz(adet10, 10, parayiYaz);
+    }
+    else {
+      adetYika++;
+      if (k2 == 0)
+      {
+        hizmet2tut = hizmet2[0];
+        k2++;
+      }
+      hizmet2[0]--;
+      hizmetYaz(yikamaID);
+
+    }
+  }
+  if (val3 == LOW)
+  { if (secenek == 0) {
+      if(k7==0)
+      {
+        yirmitltut=yirmitladet;
+        k7++;
+      }
+      adet20++;
+      parayiYaz = " tane 20TL";
+      yirmitladet++;
+      paraYaz(adet20, 20, parayiYaz);
+    }
+    else {
+      adetKuru++;
+      if (k3 == 0)
+      {
+        hizmet3tut = hizmet3[0];
+        k3++;
+      }
+      hizmet3[0]--;
+      hizmetYaz(kurulamaID);
+
+    }
+  }
+
+  if (val4 == LOW)
+  { if (secenek == 0) {
+       if(k8==0)
+      {
+        ellitltut=ellitladet;
+        k8++;
+      }
+      adet50++;
+      parayiYaz = " tane 50TL";
+      ellitladet++;
+      paraYaz(adet50, 50, parayiYaz);
+    }
+    else {
+      adetCila++;
+      if (k4 == 0)
+      {
+        hizmet4tut = hizmet4[0];
+        k4++;
+      }
+      hizmet4[0]--;
+      hizmetYaz(cilalamaID);
+
+    }
+  }
+
+  if (val5 == LOW)
+  {
+    if (secenek == 0) {
+       if(k9==0)
+      {
+        yuztltut=yuztladet;
+        k9++;
+      }
+      adet100++;
+      parayiYaz = " tane 100TL";
+      yuztladet++;
+      paraYaz(adet100, 100, parayiYaz);
+    }
+    else if (secenek == 1)
+    {
+      
+      if (rastgele == 2)
+      {
+        digitalWrite(2, HIGH);
+        lcd.setCursor(0, 1);
+        lcd.print(rastgele);
+        delay(2000);
+        digitalWrite(2, LOW);
+        lcd.clear();
+      }
+      else
+      {
+        digitalWrite(3, HIGH);
+        lcd.setCursor(0, 1);
+        lcd.print(rastgele);
+        delay(2000);
+        digitalWrite(3, LOW);
+        lcd.clear();
+      }
+    }
+    if (secenek == 1) {
+      if (rastgele != 2)
+      {
+        hizmetYaz(5);
+        secenek = 0;
+        paraMenu();
+       if(toplam==0)
+       {
+        Serial.print(F("Kasa bilgisi: "));
+        Serial.print(bestladet);
+        Serial.print(" ");
+        Serial.print(ontladet);
+        Serial.print(" ");
+        Serial.print(yirmitladet);
+        Serial.print(" ");
+        Serial.print(ellitladet);
+        Serial.print(" ");
+        Serial.println(yuztladet);
+        bestltut = bestladet;
+        ontltut = ontladet;
+        yirmitltut = yirmitladet;
+        ellitltut = ellitladet;
+        yuztltut = yuztladet;
+       }
+        
+
+        k1 = 0, k2 = 0, k3 = 0, k4 = 0;
+        k5=0,k6=0,k7=0,k8=0,k9=0;
+        adetKopuk = 0, adetKuru = 0, adetYika = 0, adetCila = 0;
+        if (toplam != 0)
+        {
+          lcd.setCursor(0, 2); 
+          lcd.print(paraTut);
+         bestladet = bestltut;
+        ontladet = ontltut;
+        yirmitladet = yirmitltut;
+        ellitladet = ellitltut;
+        yuztladet = yuztltut;
+          paraMenu();
+          Serial.print(F("Kasa bilgisi: "));
+          Serial.print(bestladet);
+          Serial.print(" ");
+          Serial.print(ontladet);
+          Serial.print(" ");
+          Serial.print(yirmitladet);
+          Serial.print(" ");
+          Serial.print(ellitladet);
+          Serial.print(" ");
+          Serial.println(yuztladet);
+        hizmet1[0] = hizmet1tut;
+        hizmet2[0] = hizmet2tut;
+        hizmet3[0] = hizmet3tut;
+        hizmet4[0] = hizmet4tut;
+
+          toplam = 0;
+          secenek = 0;
+          adetKopuk = 0, adetKuru = 0, adetYika = 0, adetCila = 0;
+          delay(3000);
+          lcd.clear();
+        }
+      }
+      else if (rastgele == 2) {
+        lcd.print("para iadesi.");
+        delay(2000);
+        lcd.setCursor(0, 1);
+        lcd.print("iade edilen para:");
+        lcd.print(iadepara);
+        lcd.print("TL");
+        delay(2000);
+        lcd.clear();
+        lcd.setCursor(0, 1);
+        lcd.print(paraTut);
+        bestladet = bestltut;
+        ontladet = ontltut;
+        yirmitladet = yirmitltut;
+        ellitladet = ellitltut;
+        yuztladet = yuztltut;
+        k5=0,k6=0,k7=0,k8=0,k9=0;
+        paraMenu();
+        Serial.print(F("Kasa bilgisi: "));
+        Serial.print(bestladet);
+        Serial.print(" ");
+        Serial.print(ontladet);
+        Serial.print(" ");
+        Serial.print(yirmitladet);
+        Serial.print(" ");
+        Serial.print(ellitladet);
+        Serial.print(" ");
+        Serial.println(yuztladet);
+        hizmet1[0] = hizmet1tut;
+        hizmet2[0] = hizmet2tut;
+        hizmet3[0] = hizmet3tut;
+        hizmet4[0] = hizmet4tut;
+        k1 = 0, k2 = 0, k3 = 0, k4 = 0;
+        toplam = 0;
+        secenek = 0;
+        adetKopuk = 0, adetKuru = 0, adetYika = 0, adetCila = 0;
+        delay(3000);
+        lcd.clear();
+      }
+    }
+    else if (secenek == 2) {
+
+      paraMenu();
+      Serial.print(F("Kasa bilgisi: "));
+      Serial.print(bestladet);
+      Serial.print(" ");
+      Serial.print(ontladet);
+      Serial.print(" ");
+      Serial.print(yirmitladet);
+      Serial.print(" ");
+      Serial.print(ellitladet);
+      Serial.print(" ");
+      Serial.println(yuztladet);
+
+      secenek = 0;
+      adetKopuk = 0, adetKuru = 0, adetYika = 0, adetCila = 0;
+    }
+
+
+  }
+  if (val6 == LOW)
+  {
+
+    if (secenek == 0) {
+      secenek = 1;
+      hizmetMenu();
+      iadepara = toplam;
+      adet5 = 0; adet10 = 0; adet20 = 0; adet50 = 0, adet100 = 0;
+    }
+    else  if (secenek == 2) {
+      lcd.print("para iadesi.");
+      delay(2000);
+      lcd.setCursor(0, 1);
+      lcd.print("iade edilen para:");
+      lcd.print(iadepara);
+      lcd.print("TL");
+      delay(2000);
+      lcd.clear();
+      lcd.setCursor(0, 1);
+      lcd.print(paraTut);
+      bestladet = bestltut;
+      ontladet = ontltut;
+      yirmitladet = yirmitltut;
+      ellitladet = ellitltut;
+      yuztladet = yuztltut;
+      hizmet1[0] = dizi[6];
+      hizmet2[0] = dizi[8];
+      hizmet3[0] = dizi[10];
+      hizmet4[0] = dizi[12];
+      paraMenu();
+      Serial.print(F("Kasa bilgisi: "));
+      Serial.print(bestladet);
+      Serial.print(" ");
+      Serial.print(ontladet);
+      Serial.print(" ");
+      Serial.print(yirmitladet);
+      Serial.print(" ");
+      Serial.print(ellitladet);
+      Serial.print(" ");
+      Serial.println(yuztladet);
+
+      toplam = 0;
+      secenek = 0;
+      adetKopuk = 0, adetKuru = 0, adetYika = 0, adetCila = 0;
+
+      delay(3000);
+      lcd.clear();
+    }
+
+  }
+
+
+}
